@@ -1,0 +1,52 @@
+# Documentation
+memory-bank/private/
+memory-bank/temp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Golang
+bin/
+pkg/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.venv
+env_file
+
+# Docker
+docker-compose.override.yml
