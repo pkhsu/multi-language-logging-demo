@@ -1,0 +1,50 @@
+<configuration>
+
+    <!-- 1) 建立一個 ConsoleAppender，將日誌輸出到標準輸出 (STDOUT) -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+
+                <!-- 2) 時間戳 (timestamp) -->
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                    <fieldName>timestamp</fieldName>
+                    <!-- 時間格式：符合 ISO8601 + 'Z'（UTC） -->
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss'Z'</pattern>
+                </timestamp>
+
+                <!-- 3) 日誌等級 (level) -->
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+
+                <!-- 4) Logger Name 當作 service -->
+                <loggerName>
+                    <fieldName>service</fieldName>
+                </loggerName>
+
+                <!-- 5) 主要訊息 (message) -->
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+
+                <!-- 
+                    6) 重點: structuredArguments 會把 
+                    logger.info("My message", kv("instance","xxx"), kv("correlationId","yyy"), ...) 
+                    這些 key-value 直接放到 JSON 的同一層
+                 -->
+                <structuredArguments />
+
+                <!-- 7) MDC 如果你使用 MDC.put("context","...") 或 correlationId, 也會輸出 -->
+                <mdc />
+
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- 8) 設定 root logger 的層級與 Appender -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>

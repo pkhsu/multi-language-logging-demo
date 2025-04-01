@@ -1,0 +1,14 @@
+{
+    "name": "nodejs_app",
+    "version": "1.0.0",
+    "main": "app.js",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "winston": "^3.9.0",
+      "axios": "^1.3.4"
+    }
+  }
+  

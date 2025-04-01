@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+           http://maven.apache.org/POM/4.0.0 
+           https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- 專案的基本資訊 -->
+  <groupId>com.example</groupId>
+  <artifactId>java-app</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <!-- Spring Boot 父層，包含多數預設設定 -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.0.2</version> <!-- 可依需求調整 -->
+    <relativePath/> <!-- lookup parent from repository -->
+  </parent>
+
+  <!-- 可自訂的屬性 -->
+  <properties>
+    <java.version>17</java.version>
+  </properties>
+
+  <!-- 相依套件清單 -->
+  <dependencies>
+
+    <!-- Spring Boot Web，提供基本 Web 功能 (Tomcat, etc.) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- logstash-logback-encoder，用於輸出 JSON Log -->
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+      <version>7.2</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- Spring Boot Maven Plugin：打包成可執行 jar -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <!-- 可以不用特別標註版本，預設繼承父層 -->
+        <configuration>
+          <!-- 可省略，但若想排除預設 logging，可在此排除 -->
+          <excludes>
+            <exclude>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-logging</artifactId>
+            </exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  python_app:
+    container_name: python_app_container
+    build: ./python_app
+    # 如果需要對外
+    ports:
+      - "5001:5001"
+    depends_on:
+      - nodejs_app
+      - golang_app
+      - javaapp
+
+  python_loguru_app:
+    container_name: python_loguru_container
+    build: ./python_loguru_app
+    ports:
+      - "5002:5002"
+    depends_on:
+      - nodejs_app
+      - golang_app
+      - javaapp
+
+  nodejs_app:
+    container_name: nodejs_app_container
+    build: ./nodejs_app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - golang_app
+      - javaapp
+    # Node.js 服務開放在 3000
+  golang_app:
+    container_name: golang_app_container
+    build: ./golang_app
+    ports:
+      - "4000:4000"
+    depends_on:
+      - javaapp
+
+  javaapp:
+    container_name: java_app_container
+    build: ./java_app
+    ports:
+      - "8080:8080"
+  streamlit_app:
+    container_name: streamlit_app_container
+    build: ./streamlit_app
+    # 如果要在 Gitpod / 本機存取 Streamlit
+    ports:
+      - "8501:8501"
+    depends_on:
+      - python_app
+      - nodejs_app
+      - golang_app
+      - javaapp
+    # 若要從 streamlit_app 容器內執行 docker logs，需要掛載 docker.sock (進階)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
