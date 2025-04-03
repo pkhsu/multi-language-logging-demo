@@ -1,0 +1,57 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+- job_name: docker
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 5s
+  # relabel_configs:
+  #   - source_labels: ['__meta_docker_container_name']
+  #     regex: '/(.*)'
+  #     target_label: 'container'
+  #   - source_labels: ['__meta_docker_container_name']
+  #     regex: '/(.*)_container'
+  #     target_label: 'service'
+  # pipeline_stages:
+  #   - docker: {}
+  #   - json:
+  #       expressions:
+  #         correlationId: (correlationId|correlation_id|trace_id|request_id)
+  #         service: (service|service_name|app)
+  #         level: (level|severity|detected_level)
+  #   - labels:
+  #       correlationId:
+  #       service:
+  #       level:
+  #   - template:
+  #       source: service_name 
+  #       template: '{{ .service }}'
+  #   - drop:
+  #       expression: '^.*"correlationId":"".*$'
+  #       drop_counter_reason: "empty_correlation_id"
+
+
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/(.*)'
+      target_label: 'container'
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/(.*)_container'
+      target_label: 'service'
+  pipeline_stages:
+    - docker: {}
+    - json:
+        expressions:
+          correlationId: correlationId
+          service: service
+    - labels:
+        correlationId:
+        service:
