@@ -19,7 +19,7 @@ public class Application {
 
         // 服務啟動時，先設定 MDC
         MDC.put("instance", "java-workshop-01");
-        MDC.put("correlationId", "dummy-xyz-java");
+        MDC.put("correlationId", "system-init");
 
         logger.info("Java app started on port 8080");
 
@@ -28,13 +28,19 @@ public class Application {
     }
 
     @GetMapping("/java-hello")
-    public String hello() {
-        // 收到 /java-hello 請求時，再帶上需要的 MDC 欄位
+    public String hello(jakarta.servlet.http.HttpServletRequest request) {
+        // 從 header 獲取 correlationId
+        String correlationId = request.getHeader("X-Correlation-ID");
+        if (correlationId == null || correlationId.isEmpty()) {
+            correlationId = "unknown";
+        }
+        
+        // 設置 MDC 上下文
         MDC.put("instance", "java-workshop-01");
-        MDC.put("correlationId", "dummy-xyz-java");
-        MDC.put("context", "{\"foo\":\"bar\"}");
+        MDC.put("correlationId", correlationId);
+        MDC.put("context", String.format("{\"headers\":{\"X-Correlation-ID\":\"%s\"}}", correlationId));
 
-        logger.info("Received GET /java-hello request");
+        logger.info("Received GET /java-hello request with correlationId: " + correlationId);
 
         MDC.clear(); // 清除 MDC，避免汙染其他請求
 

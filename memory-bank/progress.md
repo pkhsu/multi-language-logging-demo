@@ -11,7 +11,7 @@
 - [x] Memory Bank初始化
 
 ## 待完成
-- [ ] 實現correlationId傳遞
+- [x] 實現correlationId傳遞
 - [ ] 整合Kubernetes日誌收集
 - [ ] 添加日誌過濾功能
 - [ ] 實現日誌告警規則

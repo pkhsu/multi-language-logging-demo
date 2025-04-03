@@ -1,5 +1,5 @@
 # python_app/app.py
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import logging
 import requests
 
@@ -68,26 +68,37 @@ def hello():
 
 @app.route("/call_node")
 def call_node():
+    correlation_id = request.headers.get("X-Correlation-ID", "unknown")
     logger.info("Call from Python App!",
                 extra={
                     "service": "python-workshop",
-                    "correlationId": "xyz123abc",
+                    "correlationId": correlation_id,
                     "context": {"foo": "bar"}
                 })
 
     try:
         # 在同一個 docker-compose network, Node.js 服務名稱為 nodejs_app, port=3000
-        resp = requests.get("http://nodejs_app:3000/node-hello", timeout=3)
-        node_response = resp.text
-        logger.info("Node.js responded: %s" % node_response,
-                    extra={"service": "python-workshop", "correlationId": "xyz123abc"})
+        resp = requests.get("http://nodejs_app:3000/node-hello", 
+                          headers={"X-Correlation-ID": correlation_id},
+                          timeout=3)
+        node_response = resp.json()
+        logger.info("Node.js responded",
+                    extra={
+                        "service": "python-workshop", 
+                        "correlationId": correlation_id,
+                        "context": {"response": node_response}
+                    })
         return jsonify({
             "python_app": "Hello from Python!",
             "node_app": node_response
         })
     except Exception as e:
         logger.error("Error calling Node.js: %s" % e,
-                     extra={"service": "python-workshop", "correlationId": "xyz123abc"})
+                     extra={
+                         "service": "python-workshop", 
+                         "correlationId": correlation_id,
+                         "context": {"error": str(e)}
+                     })
         return jsonify({"error": str(e)}), 500
 
 

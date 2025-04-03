@@ -26,21 +26,34 @@ func main() {
 
 	// 2) 定義 Handler: /go-hello
 	http.HandleFunc("/go-hello", func(w http.ResponseWriter, r *http.Request) {
+		// 从 header 获取 correlationId
+		correlationId := r.Header.Get("X-Correlation-ID")
+		if correlationId == "" {
+			correlationId = "unknown"
+		}
+
 		logger.Info("Received GET /go-hello request",
 			zap.String("service", "golang-workshop"),
 			zap.String("instance", "golang-workshop-01"),
-			zap.String("correlationId", "dummy-xyz-go"),
-			zap.Any("context", map[string]interface{}{}),
+			zap.String("correlationId", correlationId),
+			zap.Any("context", map[string]interface{}{
+				"headers": r.Header,
+			}),
 		)
 
-		// 在此呼叫 Java App
-		javaResp, err := http.Get("http://javaapp:8080/java-hello")
+		// 创建请求并传递 correlationId
+		req, _ := http.NewRequest("GET", "http://javaapp:8080/java-hello", nil)
+		req.Header.Set("X-Correlation-ID", correlationId)
+		javaResp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			logger.Error("Error calling Java App",
 				zap.String("service", "golang-workshop"),
 				zap.String("instance", "golang-workshop-01"),
-				zap.String("correlationId", "dummy-xyz-go"),
-				zap.Any("context", map[string]interface{}{"error": err.Error()}),
+				zap.String("correlationId", correlationId),
+				zap.Any("context", map[string]interface{}{
+					"error":  err.Error(),
+					"target": "javaapp:8080/java-hello",
+				}),
 			)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "Error calling Java: %v", err)
@@ -52,7 +65,10 @@ func main() {
 		logger.Info("Java responded: "+string(body),
 			zap.String("service", "golang-workshop"),
 			zap.String("instance", "golang-workshop-01"),
-			zap.String("correlationId", "dummy-xyz-go"),
+			zap.String("correlationId", correlationId),
+			zap.Any("context", map[string]interface{}{
+				"response": string(body),
+			}),
 		)
 
 		// 最終回傳給 Node.js

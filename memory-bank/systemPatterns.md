@@ -26,10 +26,17 @@ graph TD
 ## 組件交互
 ```mermaid
 sequenceDiagram
-    participant A as 應用服務
-    participant L as 日誌收集器
-    participant S as 存儲系統
+    participant S as Streamlit UI
+    participant PL as Python Loguru (5002)
+    participant PS as Python Standard (5001)
+    participant N as Node.js (3000)
+    participant G as Golang
+    participant J as Java
     
-    A->>L: 發送結構化日誌
-    L->>S: 存儲處理後的日誌
-    S-->>A: 日誌存儲確認(可選)
+    S->>PL: /call_python_standard (X-Correlation-ID)
+    PL->>PS: /call_node (傳遞 X-Correlation-ID)
+    PS->>N: /node-hello (傳遞 X-Correlation-ID)
+    N->>G: /call-golang (傳遞 X-Correlation-ID)
+    G->>J: /call-java (傳遞 X-Correlation-ID)
+    
+    Note right of S: correlationId 由 Streamlit 生成<br/>並沿整個呼叫鏈傳遞

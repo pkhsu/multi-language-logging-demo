@@ -81,27 +81,15 @@ def main():
     if st.button("Call All Nodes"):
         correlation_id = str(uuid.uuid4())
         
-        # 並行呼叫兩個Python服務
-        with ThreadPoolExecutor() as executor:
-            future_std = executor.submit(call_python_service, "http://python_app:5001/call_node", correlation_id)
-            future_loguru = executor.submit(call_python_service, "http://python_loguru_app:5002/call_node", correlation_id)
-            
-            resp_std = future_std.result()
-            resp_loguru = future_loguru.result()
-
-            if isinstance(resp_std, dict) and "error" in resp_std:
-                st.error(f"Error calling Python (standard): {resp_std['error']}")
-            elif resp_std.status_code == 200:
-                st.success(f"Standard Python call success! Response: {resp_std.json()}")
-            else:
-                st.error(f"Standard Python call failed, status code: {resp_std.status_code}")
-
-            if isinstance(resp_loguru, dict) and "error" in resp_loguru:
-                st.error(f"Error calling Python (loguru): {resp_loguru['error']}")
-            elif resp_loguru.status_code == 200:
-                st.success(f"Loguru Python call success! Response: {resp_loguru.json()}")
-            else:
-                st.error(f"Loguru Python call failed, status code: {resp_loguru.status_code}")
+        # 串行呼叫: streamlit -> python_loguru -> python_standard
+        resp_loguru = call_python_service("http://python_loguru_app:5002/call_python_standard", correlation_id)
+        
+        if isinstance(resp_loguru, dict) and "error" in resp_loguru:
+            st.error(f"Error calling Python (loguru): {resp_loguru['error']}")
+        elif resp_loguru.status_code == 200:
+            st.success(f"Loguru Python call success! Response: {resp_loguru.json()}")
+        else:
+            st.error(f"Loguru Python call failed, status code: {resp_loguru.status_code}")
 
         # 收集並顯示所有日誌
         st.subheader("Standard Python Logs")

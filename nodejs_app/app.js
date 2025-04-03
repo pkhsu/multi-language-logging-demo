@@ -35,19 +35,26 @@ const logger = winston.createLogger({
 
 // /node-hello 路由：同時呼叫 Golang
 app.get('/node-hello', async (req, res) => {
+  // 從 header 獲取 correlationId
+  const correlationId = req.headers['x-correlation-id'] || 'unknown';
+  
   // 先記錄 Node.js 收到的請求
   logger.info('Received GET /node-hello request', {
     service: 'nodejs-workshop',
-    correlationId: 'dummy-xyz-node'
+    correlationId: correlationId,
+    context: { headers: req.headers }
   });
 
   try {
-    // 呼叫 Golang 服務
-    const goResp = await axios.get('http://golang_app:4000/go-hello');
+    // 呼叫 Golang 服務並傳遞 correlationId
+    const goResp = await axios.get('http://golang_app:4000/go-hello', {
+      headers: { 'X-Correlation-ID': correlationId }
+    });
 
     logger.info(`Golang responded: ${goResp.data}`, {
       service: 'nodejs-workshop',
-      correlationId: 'dummy-xyz-node'
+      correlationId: correlationId,
+      context: { response: goResp.data }
     });
 
     // 回傳 JSON
@@ -58,7 +65,7 @@ app.get('/node-hello', async (req, res) => {
   } catch (err) {
     logger.error('Error calling Golang', {
       service: 'nodejs-workshop',
-      correlationId: 'dummy-xyz-node',
+      correlationId: correlationId,
       context: { error: err.message }
     });
     return res.status(500).json({ error: err.message });
