@@ -7,6 +7,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.Map;
+import java.util.Collections;
 
 @SpringBootApplication
 @RestController
@@ -28,7 +30,7 @@ public class Application {
     }
 
     @GetMapping("/java-hello")
-    public String hello(jakarta.servlet.http.HttpServletRequest request) {
+    public Map<String, String> hello(jakarta.servlet.http.HttpServletRequest request) {
         // 從 header 獲取 correlationId
         String correlationId = request.getHeader("X-Correlation-ID");
         if (correlationId == null || correlationId.isEmpty()) {
@@ -44,6 +46,6 @@ public class Application {
 
         MDC.clear(); // 清除 MDC，避免汙染其他請求
 
-        return "Hello from Java App!";
+        return Collections.singletonMap("java_app", "Hello from Java App!");
     }
 }

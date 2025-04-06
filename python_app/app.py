@@ -2,6 +2,7 @@
 from flask import Flask, jsonify, request
 import logging
 import requests
+import json # Add json import
 
 import logging
 from pythonjsonlogger import jsonlogger
@@ -88,18 +89,91 @@ def call_node():
                         "correlationId": correlation_id,
                         "context": {"response": node_response}
                     })
+        # Return new JSON structure
         return jsonify({
-            "python_app": "Hello from Python!",
-            "node_app": node_response
-        })
-    except Exception as e:
-        logger.error("Error calling Node.js: %s" % e,
+            "python_standard_app": "Hello from Python!", # Renamed key
+            "downstream_response": node_response # Node.js response is already nested
+        }), 200 # Explicitly return 200 OK
+
+    except requests.exceptions.Timeout:
+        error_message = "Request to Node.js App timed out"
+        logger.error(error_message,
                      extra={
-                         "service": "python-workshop", 
+                         "service": "python-workshop",
+                         "correlationId": correlation_id,
+                         "context": {"error": "timeout"}
+                     })
+        return jsonify({"error": error_message}), 500
+
+    except requests.exceptions.RequestException as e:
+        # Catch connection errors, etc.
+        error_message = f"Error connecting to Node.js App: {e}"
+        logger.error(error_message,
+                     extra={
+                         "service": "python-workshop",
                          "correlationId": correlation_id,
                          "context": {"error": str(e)}
                      })
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to connect to downstream service", "details": error_message}), 500
+
+    except json.JSONDecodeError as e:
+        # This might happen if Node.js returns non-JSON
+        error_message = "Failed to decode JSON response from Node.js App"
+        # Try to get response text if possible, handle potential errors
+        response_text = ""
+        try:
+            response_text = resp.text[:500] if 'resp' in locals() and hasattr(resp, 'text') else "Response text not available"
+        except Exception as read_err:
+            response_text = f"Could not read response text: {read_err}"
+
+        logger.error(error_message,
+                     extra={
+                         "service": "python-workshop",
+                         "correlationId": correlation_id,
+                         "context": {"error": str(e), "response_text": response_text}
+                     })
+        return jsonify({"error": "Invalid response from downstream service", "details": error_message}), 500
+
+    except Exception as e:
+        # Catch-all for other errors, including potential errors from resp.json() if status wasn't 200
+        error_message = f"An unexpected error occurred: {e}"
+        # Check if it's an error response from downstream
+        response_details = ""
+        status_code = 500 # Default to 500
+        if 'resp' in locals() and hasattr(resp, 'status_code'):
+             # If we have a response object, try to get status and text
+             status_code = resp.status_code
+             try:
+                 # Attempt to parse downstream error JSON if possible
+                 error_json = resp.json()
+                 response_details = error_json
+             except json.JSONDecodeError:
+                 # Fallback to raw text if not JSON
+                 try:
+                     response_details = resp.text[:500]
+                 except Exception as read_err:
+                     response_details = f"Could not read response text: {read_err}"
+             except Exception as parse_err:
+                 response_details = f"Could not parse or read response: {parse_err}"
+
+             # Log specific downstream error
+             logger.error(f"Downstream Node.js service returned status {status_code}",
+                          extra={
+                              "service": "python-workshop",
+                              "correlationId": correlation_id,
+                              "context": {"error": str(e), "downstream_status": status_code, "downstream_response": response_details}
+                          })
+             # Return a generic 500 error as requested
+             return jsonify({"error": "Downstream service error", "details": f"Node.js returned status {status_code}"}), 500
+        else:
+             # Log general unexpected error
+             logger.error(error_message,
+                          extra={
+                              "service": "python-workshop",
+                              "correlationId": correlation_id,
+                              "context": {"error": str(e)}
+                          })
+             return jsonify({"error": "An internal server error occurred", "details": error_message}), 500
 
 
 if __name__ == "__main__":

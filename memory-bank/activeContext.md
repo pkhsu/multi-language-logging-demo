@@ -6,6 +6,8 @@
 3. 實現日誌告警規則
 
 ## 近期變更
+- 2025/04/06: 標準化跨服務 API 呼叫鏈的回應格式 (使用 `downstream_response` 鍵進行嵌套)
+- 2025/04/06: 修復 Python Loguru 應用程式中 correlationId 未正確記錄的問題
 - 2025/04/03: 修復request未定義問題
 - 2025/04/03: 統一API響應格式
 - 2025/04/01: 新增Python loguru實現

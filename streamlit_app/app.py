@@ -92,11 +92,11 @@ def main():
             st.error(f"Loguru Python call failed, status code: {resp_loguru.status_code}")
 
         # 收集並顯示所有日誌
-        st.subheader("Standard Python Logs")
-        st.text_area("Python (standard) Logs", get_container_logs("python_app_container"), height=200)
-
         st.subheader("Loguru Python Logs")
         st.text_area("Python (loguru) Logs", get_container_logs("python_loguru_container"), height=200)
+        
+        st.subheader("Standard Python Logs")
+        st.text_area("Python (standard) Logs", get_container_logs("python_app_container"), height=200)
 
         st.subheader("Node.js App Logs")
         st.text_area("Node.js App Logs", get_container_logs("nodejs_app_container"), height=200)

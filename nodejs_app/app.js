@@ -54,21 +54,40 @@ app.get('/node-hello', async (req, res) => {
     logger.info(`Golang responded: ${goResp.data}`, {
       service: 'nodejs-workshop',
       correlationId: correlationId,
+      // Log the parsed response object
       context: { response: goResp.data }
     });
 
-    // 回傳 JSON
+    // 回傳新的 JSON 結構
     return res.json({
-      node_app: "Hello from Node.js!",
-      go_response: goResp.data
+      nodejs_app: "Hello from Node.js!",
+      downstream_response: goResp.data // Golang's response is already in the desired nested format
     });
   } catch (err) {
-    logger.error('Error calling Golang', {
+    // Improved error handling
+    let errorMessage = 'Error calling Golang';
+    let errorDetails = err.message;
+    let statusCode = 500;
+
+    if (err.response) {
+      // Error from downstream service (Golang)
+      errorMessage = `Downstream Golang service error: ${err.response.status}`;
+      errorDetails = err.response.data || err.message; // Use response data if available
+      statusCode = err.response.status >= 500 ? 500 : 400; // Keep 5xx as 500, map 4xx to 400 (or keep 500 for simplicity)
+      // For simplicity as requested earlier, let's stick to 500 for all errors
+      statusCode = 500;
+    } else if (err.request) {
+      // Request made but no response received (e.g., timeout, connection refused)
+      errorMessage = 'No response received from downstream Golang service';
+    }
+
+    logger.error(errorMessage, {
       service: 'nodejs-workshop',
       correlationId: correlationId,
-      context: { error: err.message }
+      context: { error: errorDetails, axios_error_code: err.code }
     });
-    return res.status(500).json({ error: err.message });
+    // Return standardized error JSON with status 500
+    return res.status(statusCode).json({ error: errorMessage, details: errorDetails });
   }
 });
 
